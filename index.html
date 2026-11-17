@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Open in Obsidian</title>
+<style>body{font:16px system-ui,sans-serif;margin:3rem;color:#222}</style>
+</head>
+<body>
+<p id="msg">Nothing to open: add a note path after <code>#</code>.</p>
+<script>
+// Usage: https://robbieh-noname.github.io/obsidian-open/#<vault-relative note path, URL-encoded>
+// The part after "#" never leaves the browser. Only obsidian://open in the "Work" vault is ever opened.
+(function () {
+  var raw = location.hash.slice(1);
+  if (!raw) return;
+  var file;
+  try { file = decodeURIComponent(raw); } catch (e) { file = raw; }
+  var target = "obsidian://open?vault=Work&file=" + encodeURIComponent(file);
+  var msg = document.getElementById("msg");
+  msg.textContent = "Opening in Obsidian: " + file + " ";
+  var a = document.createElement("a");
+  a.href = target;
+  a.textContent = "(click here if nothing happens)";
+  msg.appendChild(a);
+  location.href = target;
+})();
+</script>
+</body>
+</html>
