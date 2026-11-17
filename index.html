@@ -36,6 +36,10 @@
   back.hidden = false;
   back.onclick = function () { done = false; goBack(); };
   function onLeave() { setTimeout(goBack, 300); }
+  // ?setup turns the automatic return off, so the browser's "Open Obsidian?" prompt stays
+  // up long enough to tick "Always allow". Without that, the prompt takes focus, which looks
+  // like Obsidian opening, and the return dismisses the prompt.
+  if (/(^|[?&])setup(=|&|$)/.test(location.search.slice(1))) { location.href = target; return; }
   window.addEventListener("blur", onLeave, { once: true });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "hidden") onLeave();
