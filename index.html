@@ -27,11 +27,12 @@
   a.textContent = "(click here if nothing happens)";
   msg.appendChild(a);
 
-  // Return once Obsidian has taken focus. Chrome doesn't reliably fire "blur" for an
-  // external-app handoff, so also poll document.hasFocus(). Gives up after 15 s (e.g. the
-  // "Open Obsidian?" prompt was dismissed), leaving the Back button.
+  // Go back to the page the link was clicked on when the user returns to this tab
+  // (focus or visibility comes back at least 1 s after the hand-off). Nothing happens while
+  // Obsidian is launching, so the "Open Obsidian?" prompt and the launch are never cut off.
   var log = document.getElementById("log");
   function note(t) { log.textContent += (log.textContent ? " · " : "") + t; }
+  var launched = Date.now();
   var done = false;
   function goBack(why) {
     if (done) return;
@@ -42,16 +43,15 @@
   var back = document.getElementById("back");
   back.hidden = false;
   back.onclick = function () { done = false; goBack("button"); };
-  window.addEventListener("blur", function () { note("blur"); setTimeout(function () { goBack("blur"); }, 300); }, { once: true });
+  function onReturn(why) {
+    note(why);
+    if (Date.now() - launched >= 1000) goBack(why);
+  }
+  window.addEventListener("blur", function () { note("blur"); });
+  window.addEventListener("focus", function () { onReturn("focus"); });
   document.addEventListener("visibilitychange", function () {
-    note("visibility " + document.visibilityState);
-    if (document.visibilityState === "hidden") setTimeout(function () { goBack("hidden"); }, 300);
+    if (document.visibilityState === "visible") onReturn("visible"); else note("hidden");
   });
-  var started = Date.now();
-  var poll = setInterval(function () {
-    if (done || Date.now() - started > 15000) { clearInterval(poll); return; }
-    if (!document.hasFocus()) { clearInterval(poll); setTimeout(function () { goBack("focus-poll"); }, 300); }
-  }, 200);
 
   location.href = target;
 })();
