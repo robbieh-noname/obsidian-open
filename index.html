@@ -8,9 +8,11 @@
 </head>
 <body>
 <p id="msg">Nothing to open: add a note path after <code>#</code>.</p>
+<p><button id="back" hidden>&larr; Back</button></p>
 <script>
 // Usage: https://robbieh-noname.github.io/obsidian-open/#<vault-relative note path, URL-encoded>
 // The part after "#" never leaves the browser. Only obsidian://open in the "Work" vault is ever opened.
+// After Obsidian takes focus, return to the page the link was clicked on (or close the tab if it was opened in a new one).
 (function () {
   var raw = location.hash.slice(1);
   if (!raw) return;
@@ -23,6 +25,22 @@
   a.href = target;
   a.textContent = "(click here if nothing happens)";
   msg.appendChild(a);
+
+  var done = false;
+  function goBack() {
+    if (done) return;
+    done = true;
+    if (history.length > 1) { history.back(); } else { window.close(); }
+  }
+  var back = document.getElementById("back");
+  back.hidden = false;
+  back.onclick = function () { done = false; goBack(); };
+  function onLeave() { setTimeout(goBack, 300); }
+  window.addEventListener("blur", onLeave, { once: true });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") onLeave();
+  }, { once: true });
+
   location.href = target;
 })();
 </script>
