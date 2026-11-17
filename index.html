@@ -9,11 +9,10 @@
 <body>
 <p id="msg">Nothing to open: add a note path after <code>#</code>.</p>
 <p><button id="back" hidden>&larr; Back</button></p>
-<p id="log" style="color:#888;font-size:12px"></p>
 <script>
 // Usage: https://robbieh-noname.github.io/obsidian-open/#<vault-relative note path, URL-encoded>
 // The part after "#" never leaves the browser. Only obsidian://open in the "Work" vault is ever opened.
-// After Obsidian takes focus, return to the page the link was clicked on (or close the tab if it was opened in a new one).
+// No automatic return: the Back button (or Cmd+[) goes back to the page the link was clicked on.
 (function () {
   var raw = location.hash.slice(1);
   if (!raw) return;
@@ -27,31 +26,11 @@
   a.textContent = "(click here if nothing happens)";
   msg.appendChild(a);
 
-  // Go back to the page the link was clicked on when the user returns to this tab
-  // (focus or visibility comes back at least 1 s after the hand-off). Nothing happens while
-  // Obsidian is launching, so the "Open Obsidian?" prompt and the launch are never cut off.
-  var log = document.getElementById("log");
-  function note(t) { log.textContent += (log.textContent ? " · " : "") + t; }
-  var launched = Date.now();
-  var done = false;
-  function goBack(why) {
-    if (done) return;
-    done = true;
-    note("back (" + why + ", history " + history.length + ")");
-    if (history.length > 1) { history.back(); } else { window.close(); }
-  }
   var back = document.getElementById("back");
   back.hidden = false;
-  back.onclick = function () { done = false; goBack("button"); };
-  function onReturn(why) {
-    note(why);
-    if (Date.now() - launched >= 1000) goBack(why);
-  }
-  window.addEventListener("blur", function () { note("blur"); });
-  window.addEventListener("focus", function () { onReturn("focus"); });
-  document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") onReturn("visible"); else note("hidden");
-  });
+  back.onclick = function () {
+    if (history.length > 1) { history.back(); } else { window.close(); }
+  };
 
   location.href = target;
 })();
