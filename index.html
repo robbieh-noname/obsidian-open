@@ -9,6 +9,7 @@
 <body>
 <p id="msg">Nothing to open: add a note path after <code>#</code>.</p>
 <p><button id="back" hidden>&larr; Back</button></p>
+<p id="log" style="color:#888;font-size:12px"></p>
 <script>
 // Usage: https://robbieh-noname.github.io/obsidian-open/#<vault-relative note path, URL-encoded>
 // The part after "#" never leaves the browser. Only obsidian://open in the "Work" vault is ever opened.
@@ -26,20 +27,31 @@
   a.textContent = "(click here if nothing happens)";
   msg.appendChild(a);
 
+  // Return once Obsidian has taken focus. Chrome doesn't reliably fire "blur" for an
+  // external-app handoff, so also poll document.hasFocus(). Gives up after 15 s (e.g. the
+  // "Open Obsidian?" prompt was dismissed), leaving the Back button.
+  var log = document.getElementById("log");
+  function note(t) { log.textContent += (log.textContent ? " · " : "") + t; }
   var done = false;
-  function goBack() {
+  function goBack(why) {
     if (done) return;
     done = true;
+    note("back (" + why + ", history " + history.length + ")");
     if (history.length > 1) { history.back(); } else { window.close(); }
   }
   var back = document.getElementById("back");
   back.hidden = false;
-  back.onclick = function () { done = false; goBack(); };
-  function onLeave() { setTimeout(goBack, 300); }
-  window.addEventListener("blur", onLeave, { once: true });
+  back.onclick = function () { done = false; goBack("button"); };
+  window.addEventListener("blur", function () { note("blur"); setTimeout(function () { goBack("blur"); }, 300); }, { once: true });
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "hidden") onLeave();
-  }, { once: true });
+    note("visibility " + document.visibilityState);
+    if (document.visibilityState === "hidden") setTimeout(function () { goBack("hidden"); }, 300);
+  });
+  var started = Date.now();
+  var poll = setInterval(function () {
+    if (done || Date.now() - started > 15000) { clearInterval(poll); return; }
+    if (!document.hasFocus()) { clearInterval(poll); setTimeout(function () { goBack("focus-poll"); }, 300); }
+  }, 200);
 
   location.href = target;
 })();
